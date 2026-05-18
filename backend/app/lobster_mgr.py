@@ -32,7 +32,11 @@ load_dotenv()
 # Configuration (from .env)
 # ---------------------------------------------------------------------------
 
-_DEFAULT_BINARY = "lobstertrap-linux" if os.name != "nt" else "../lobstertrap.exe"
+_APP_DIR = Path(__file__).parent.parent  # backend/
+if os.name != "nt":
+    _DEFAULT_BINARY = str(_APP_DIR / "lobstertrap-linux")
+else:
+    _DEFAULT_BINARY = str(_APP_DIR.parent / "lobstertrap.exe")
 _BINARY_PATH = Path(os.getenv("LOBSTER_TRAP_PATH", _DEFAULT_BINARY))
 _PORT = int(os.getenv("LOBSTER_TRAP_PORT", "8080"))
 _AUDIT_LOG = Path(__file__).parent / "audit.jsonl"
