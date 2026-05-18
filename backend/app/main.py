@@ -149,7 +149,7 @@ async def upload_policy(file: UploadFile = File(...)):
     return StreamingResponse(
         _event_stream(),
         media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"},
     )
 
 
@@ -321,6 +321,7 @@ async def run_redteam(policy_id: str, request: Request):
     use_custom = bool(categories_param or total_param)
 
     async def _stream():
+        yield ": ping\n\n"  # flush Railway buffer immediately
         try:
             if use_custom:
                 from .test_gen import build_custom_suite
@@ -346,7 +347,7 @@ async def run_redteam(policy_id: str, request: Request):
     return StreamingResponse(
         _stream(),
         media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"},
     )
 
 
@@ -737,7 +738,7 @@ async def observability_feed(request: Request):
     return StreamingResponse(
         _stream(),
         media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"},
     )
 
 
