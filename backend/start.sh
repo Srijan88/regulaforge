@@ -2,7 +2,7 @@
 # Start Lobster Trap in background
 if [ -f "./lobstertrap-linux" ]; then
   chmod +x ./lobstertrap-linux
-  ./lobstertrap-linux serve --listen :8081 --policy ../policies/finance_combined_policy.yaml &
+  ./lobstertrap-linux serve --listen :8081 &
   echo "Lobster Trap started on port 8081"
 else
   echo "WARNING: lobstertrap-linux binary not found, skipping LT"

@@ -34,7 +34,9 @@ load_dotenv()
 
 _APP_DIR = Path(__file__).parent.parent  # backend/
 if os.name != "nt":
-    _DEFAULT_BINARY = str(_APP_DIR / "lobstertrap-linux")
+    # On Linux/Railway: check same dir as app, then /app/
+    _lt_candidates = [_APP_DIR / "lobstertrap-linux", Path("/app/lobstertrap-linux")]
+    _DEFAULT_BINARY = next((str(p) for p in _lt_candidates if p.exists()), str(_APP_DIR / "lobstertrap-linux"))
 else:
     _DEFAULT_BINARY = str(_APP_DIR.parent / "lobstertrap.exe")
 _BINARY_PATH = Path(os.getenv("LOBSTER_TRAP_PATH", _DEFAULT_BINARY))
