@@ -1,0 +1,184 @@
+version: '1.0'
+policy_name: finance-combined
+default_action: ALLOW
+ingress_rules:
+- name: deny_ofac_sanctioned_wire
+  description: Denies wire transfers to OFAC sanctioned jurisdictions or entities, as per BSA/AML and
+    OFAC obligations.
+  priority: 72
+  action: DENY
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+  deny_message: '[REGULAFORGE] BLOCKED: Denies wire transfers to OFAC sanctioned jurisdictions or entities,
+    as per BSA/AML and OFAC obligations.. [_upload_d8880ac5.pdf §Risk Mitigation]'
+- name: block_incomplete_wire_transfer_details
+  description: Wire transfer instructions must contain complete information on the sender and receiver
+    of funds. Messages requesting transfers with explicitly incomplete details are prohibited.
+  priority: 71
+  action: DENY
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+  deny_message: '[REGULAFORGE] BLOCKED: Wire transfer instructions must contain complete information on
+    the sender and receiver of funds. Messages requesting transfers with explicitly incomplete details
+    are prohibited.. [_upload_d8880ac5.pdf §Funds Transfers — Overview]'
+- name: require_ofac_screening_for_international_swift
+  description: International interbank transactions via SWIFT must undergo OFAC sanctions screening, especially
+    for sanctioned jurisdictions.
+  priority: 70
+  action: DENY
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+  deny_message: '[REGULAFORGE] BLOCKED: International interbank transactions via SWIFT must undergo OFAC
+    sanctions screening, especially for sanctioned jurisdictions.. [_upload_d8880ac5.pdf §Funds Transfers
+    — Overview]'
+- name: deny_payment_info_alteration
+  description: Denies payment messages where information is intentionally omitted, deleted, or altered
+    to avoid detection by other financial institutions.
+  priority: 69
+  action: DENY
+  conditions:
+  - field: contains_exfiltration
+    match_type: boolean
+    value: true
+  deny_message: '[REGULAFORGE] BLOCKED: Denies payment messages where information is intentionally omitted,
+    deleted, or altered to avoid detection by other financial institutions.. [_upload_d8880ac5.pdf §Risk
+    Mitigation]'
+- name: deny_message_type_evasion
+  description: Denies the use of specific payment message types solely for the purpose of avoiding detection
+    of information by other financial institutions.
+  priority: 68
+  action: DENY
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+  deny_message: '[REGULAFORGE] BLOCKED: Denies the use of specific payment message types solely for the
+    purpose of avoiding detection of information by other financial institutions.. [_upload_d8880ac5.pdf
+    §Risk Mitigation]'
+- name: audit_suspicious_activity_monitoring
+  description: Audits all funds transfers to ensure they are processed through an effective risk-based
+    suspicious activity monitoring system.
+  priority: 38
+  action: LOG
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+- name: audit_correspondent_banking_due_diligence
+  description: Audits correspondent banking transactions to ensure compliance with USA PATRIOT Act Section
+    312 and proper due diligence.
+  priority: 37
+  action: LOG
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+- name: audit_foreign_exchange_transactions
+  description: Monitor foreign exchange transactions, especially those involving payment-versus-payment
+    settlement models, for compliance.
+  priority: 34
+  action: LOG
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+- name: audit_cover_payment_monitoring
+  description: Audits cover payments to ensure they are processed through automated monitoring systems
+    to identify suspicious activity.
+  priority: 34
+  action: LOG
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+- name: flag_aml_risk_in_funds_transfer
+  description: Funds transfers inherently carry AML risks that require broader assessment.
+  priority: 25
+  action: LOG
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+- name: flag_pupid_non_customer_risk
+  description: Flags PUPID (Pay-Upon-Identification) transactions involving non-customers with minimal
+    or no identifying information, which presents significant risk.
+  priority: 25
+  action: LOG
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+- name: flag_fedwire_operational_risks
+  description: Fedwire participants may be exposed to risks such as errors, omissions, and fraud, requiring
+    careful review.
+  priority: 24
+  action: LOG
+  conditions:
+  - field: contains_pii
+    match_type: boolean
+    value: true
+- name: flag_large_value_time_critical_payments
+  description: Large value, time-critical payments, especially those related to interbank settlements,
+    foreign exchange, or securities, pose elevated risk.
+  priority: 21
+  action: LOG
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+- name: flag_chips_international_offshore_transactions
+  description: USD payments via CHIPS related to international transactions or offshore investments should
+    be flagged for review due to elevated risk.
+  priority: 20
+  action: LOG
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+- name: flag_high_risk_wire_factors
+  description: Flags wire transfers presenting heightened risk due to factors like high volume, large
+    dollar amounts, unusual geographic locations, or non-customer involvement.
+  priority: 18
+  action: LOG
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+- name: flag_incomplete_cover_payment_info
+  description: Flags cover payments lacking complete originator and beneficiary information (e.g., in
+    MT 103 or MT 202 COV messages), which poses monitoring risks.
+  priority: 17
+  action: LOG
+  conditions:
+  - field: contains_exfiltration
+    match_type: boolean
+    value: true
+- name: flag_ivts_indicators
+  description: Flags transactions showing indicators of Informal Value Transfer Systems (IVTS) due to
+    their heightened risk for money laundering and terrorism financing.
+  priority: 16
+  action: LOG
+  conditions:
+  - field: contains_phishing_patterns
+    match_type: boolean
+    value: true
+egress_rules: []
+rate_limits:
+  requests_per_minute: 60
+  requests_per_hour: 500
+  burst_threshold: 10
+filesystem:
+  denied_paths:
+  - /etc/**
+  - /root/**
+  - '**/.ssh/**'
+  - '**/.env'
+  - '**/*secret*'
+  - '**/*password*'
+  - '**/*credential*'

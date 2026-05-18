@@ -7,7 +7,7 @@ echo "Files: $(ls -la)"
 if [ -f "./lobstertrap-linux" ]; then
   chmod +x ./lobstertrap-linux
   mkdir -p configs
-  cp ../policies/finance_combined_policy.yaml configs/default_policy.yaml 2>/dev/null && echo "Policy copied OK" || echo "Policy copy failed, using default"
+  cp policies/finance_combined_policy.yaml configs/default_policy.yaml 2>/dev/null && echo "Policy copied OK" || echo "Policy copy failed"
   ./lobstertrap-linux serve --listen :8081 &
   sleep 1
   echo "Lobster Trap started on port 8081"

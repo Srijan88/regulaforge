@@ -42,7 +42,7 @@ else:
 _BINARY_PATH = Path(os.getenv("LOBSTER_TRAP_PATH", _DEFAULT_BINARY))
 _PORT = int(os.getenv("LOBSTER_TRAP_PORT", "8080"))
 _AUDIT_LOG = Path(__file__).parent / "audit.jsonl"
-_DEFAULT_POLICY = Path(__file__).parents[2] / "policies" / "finance_combined_policy.yaml"
+_DEFAULT_POLICY = Path(__file__).parents[1] / "policies" / "finance_combined_policy.yaml"
 
 
 # ---------------------------------------------------------------------------
