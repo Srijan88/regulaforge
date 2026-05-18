@@ -12,7 +12,7 @@ from fastapi.responses import StreamingResponse, PlainTextResponse
 from .extractor import extract_rules, extract_rules_stream, extract_to_result, ProgressEvent
 from .lobster_mgr import manager as lt_manager
 from .healer import apply_heal, get_heal, heal_run
-from .simulator import get_run, list_runs, run_attack_suite
+from .simulator import get_run, list_runs, run_attack_suite, start_bg_run, get_bg_progress
 from .test_gen import get_attack_suite
 from .reporter import generate_report
 
@@ -349,6 +349,67 @@ async def run_redteam(policy_id: str, request: Request):
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"},
     )
+
+
+@redteam_router.post("/start/{policy_id}")
+async def start_redteam(policy_id: str, request: Request):
+    """
+    Start a red-team run as a background task and return the run_id immediately.
+    Poll /redteam/progress/{run_id} to get incremental verdicts.
+    """
+    if not lt_manager.is_running:
+        raise HTTPException(status_code=503, detail="Lobster Trap is not running")
+
+    try:
+        concurrency = int(request.query_params.get("concurrency", "1"))
+        concurrency = max(1, min(concurrency, 3))
+    except ValueError:
+        concurrency = 1
+
+    categories_param = request.query_params.get("categories", "").strip()
+    total_param      = request.query_params.get("total", "").strip()
+    disable_gemini   = request.query_params.get("disable_gemini", "true").lower() != "false"
+    use_gemini_guard = not disable_gemini
+    use_custom       = bool(categories_param or total_param)
+
+    if use_custom:
+        from .test_gen import build_custom_suite
+        selected = [c.strip() for c in categories_param.split(",") if c.strip()]
+        try:
+            total_attacks = max(2, int(total_param)) if total_param else 20
+        except ValueError:
+            total_attacks = 20
+        policy_context = ""
+        if lt_manager.active_policy_path and lt_manager.active_policy_path.exists():
+            policy_context = lt_manager.active_policy_path.read_text(encoding="utf-8")
+        suite = await build_custom_suite(selected, total_attacks, policy_context)
+    else:
+        suite = get_attack_suite(use_huggingface=False)
+
+    import uuid as _uuid_mod
+    run_id = f"bg-{_uuid_mod.uuid4().hex[:8]}"
+    start_bg_run(run_id, suite, policy_id, concurrency, use_gemini_guard)
+    total = len(suite["attacks"]) + len(suite["safe"])
+    return {"run_id": run_id, "total": total}
+
+
+@redteam_router.get("/progress/{run_id}")
+async def redteam_progress(run_id: str, request: Request):
+    """
+    Poll for incremental verdicts from a background red-team run.
+
+    Query params:
+      from_index=N  (return only verdicts from index N onwards; default 0)
+    """
+    try:
+        from_index = int(request.query_params.get("from_index", "0"))
+    except ValueError:
+        from_index = 0
+
+    data = get_bg_progress(run_id, from_index)
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"Run '{run_id}' not found")
+    return data
 
 
 @redteam_router.get("/runs")

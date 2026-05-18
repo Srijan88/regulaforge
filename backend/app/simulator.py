@@ -29,6 +29,12 @@ from .schemas import RuleAction, RunSummary, SimulationVerdict
 # ---------------------------------------------------------------------------
 _runs: dict[str, dict] = {}
 
+# ---------------------------------------------------------------------------
+# Background run store  (run_id → incremental progress for polling)
+# ---------------------------------------------------------------------------
+_bg_runs: dict[str, dict] = {}
+# Shape: { "verdicts": [...], "total": int, "done": bool, "summary": dict|None, "error": str|None }
+
 # Gemini semantic guard — OFF by default for red team (policy-only mode).
 # Red team should test what the COMPILED POLICY catches, not Gemini's general intelligence.
 # Enable explicitly with use_gemini_guard=True in run_attack_suite() for production testing.
@@ -208,6 +214,72 @@ async def run_attack_suite(
     }
 
     yield {"type": "summary", "data": summary.model_dump(), "run_id": run_id}
+
+
+# ---------------------------------------------------------------------------
+# Background run (polling-friendly alternative to SSE)
+# ---------------------------------------------------------------------------
+
+async def _bg_worker(run_id: str, suite: dict, policy_id: str, concurrency: int, use_gemini_guard: bool) -> None:
+    """Background task: process attack suite and write results to _bg_runs incrementally."""
+    slot = _bg_runs[run_id]
+    all_items: list[dict] = suite["attacks"] + suite["safe"]
+    slot["total"] = len(all_items)
+
+    verdicts: list[SimulationVerdict] = []
+    sem = asyncio.Semaphore(concurrency)
+
+    async def _bounded(item: dict) -> SimulationVerdict:
+        async with sem:
+            return await simulate_one(item, use_gemini_guard=use_gemini_guard)
+
+    tasks = [asyncio.create_task(_bounded(item)) for item in all_items]
+    for coro in asyncio.as_completed(tasks):
+        try:
+            verdict: SimulationVerdict = await coro
+        except Exception as exc:
+            slot["error"] = str(exc)
+            continue
+        verdicts.append(verdict)
+        slot["verdicts"].append(verdict.model_dump())
+
+    # Build summary
+    total = len(all_items)
+    passed_count = sum(1 for v in verdicts if v.passed)
+    failed_count = total - passed_count
+    pass_rate = round(passed_count / total * 100, 1) if total else 0.0
+    summary = RunSummary(
+        run_id=run_id,
+        policy_id=policy_id,
+        total_attacks=total,
+        passed=passed_count,
+        failed=failed_count,
+        pass_rate=pass_rate,
+        created_at=datetime.now(timezone.utc).isoformat(),
+    )
+    _runs[run_id] = {"summary": summary, "verdicts": verdicts, "policy_id": policy_id}
+    slot["summary"] = summary.model_dump()
+    slot["done"] = True
+
+
+def start_bg_run(run_id: str, suite: dict, policy_id: str, concurrency: int, use_gemini_guard: bool) -> None:
+    """Initialise slot and schedule background worker."""
+    _bg_runs[run_id] = {"verdicts": [], "total": 0, "done": False, "summary": None, "error": None}
+    asyncio.create_task(_bg_worker(run_id, suite, policy_id, concurrency, use_gemini_guard))
+
+
+def get_bg_progress(run_id: str, from_index: int = 0) -> dict | None:
+    """Return incremental progress for a background run."""
+    slot = _bg_runs.get(run_id)
+    if slot is None:
+        return None
+    return {
+        "verdicts": slot["verdicts"][from_index:],
+        "total": slot["total"],
+        "done": slot["done"],
+        "summary": slot["summary"],
+        "error": slot["error"],
+    }
 
 
 # ---------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Shell from "@/components/Shell";
-import { API, apiFetch, sseUrl } from "@/lib/api";
+import { API, apiFetch } from "@/lib/api";
 import ExplainabilityPanel, { ExplainData } from "@/components/ExplainabilityPanel";
 import { useMode } from "@/contexts/ModeContext";
 import { getMockAttacks } from "@/lib/mock-scenarios";
@@ -425,7 +425,8 @@ export default function RedTeamPage() {
   // Default is policy-only — tests what your COMPILED RULES catch, not Gemini's general intelligence.
   const [fullStack, setFullStack]       = useState(false);
 
-  const esRef = useRef<EventSource | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollIndexRef = useRef<number>(0);
   const { mode, selectedPolicy } = useMode();
 
   const toggleCat = (id: CategoryId) => {
@@ -511,41 +512,63 @@ export default function RedTeamPage() {
           setRunning(false);
         }
       }, 120);
-      esRef.current = { close: () => { cancelled = true; clearInterval(tick); } } as unknown as EventSource;
+      pollRef.current = tick;
       return;
     }
 
-    // no health fetch needed — mode is controlled locally via fullStack toggle
-
+    // Start background run then poll for incremental results
     const cats = Array.from(selectedCats).join(",");
-    const url  = sseUrl(`/redteam/run/finance-combined?categories=${cats}&total=${attackCount}&concurrency=2&disable_gemini=${!fullStack}`);
-    const es   = new EventSource(url);
-    esRef.current = es;
+    const qs   = `categories=${cats}&total=${attackCount}&concurrency=2&disable_gemini=${!fullStack}`;
 
-    es.onmessage = (e) => {
-      try {
-        const event = JSON.parse(e.data);
-        if (event.type === "verdict") {
-          setBuildingPhase(false);
-          setRows(prev => [...prev, event.data as VerdictRow]);
-          setProgress({ done: event.index, total: event.total });
-        } else if (event.type === "summary") {
-          setBuildingPhase(false);
-          const s = event.data as Summary;
-          s.run_id = event.run_id;
-          setSummary(s);
-          setRunId(event.run_id);
-          localStorage.setItem("last_run_id", event.run_id);
+    apiFetch<{ run_id: string; total: number }>(
+      `/redteam/start/finance-combined?${qs}`,
+      { method: "POST" },
+    ).then(({ run_id, total }) => {
+      setBuildingPhase(false);
+      setProgress({ done: 0, total });
+      pollIndexRef.current = 0;
+
+      const timer = setInterval(async () => {
+        try {
+          const data = await apiFetch<{
+            verdicts: VerdictRow[];
+            total: number;
+            done: boolean;
+            summary: Summary | null;
+            error: string | null;
+          }>(`/redteam/progress/${run_id}?from_index=${pollIndexRef.current}`);
+
+          if (data.verdicts.length > 0) {
+            pollIndexRef.current += data.verdicts.length;
+            setRows(prev => [...prev, ...data.verdicts]);
+            setProgress({ done: pollIndexRef.current, total: data.total || total });
+          }
+
+          if (data.done) {
+            clearInterval(timer);
+            if (data.summary) {
+              const s = { ...data.summary, run_id };
+              setSummary(s);
+              setRunId(run_id);
+              localStorage.setItem("last_run_id", run_id);
+            }
+            setRunning(false);
+          }
+          if (data.error) {
+            clearInterval(timer);
+            setRunning(false);
+          }
+        } catch {
+          clearInterval(timer);
           setRunning(false);
-          es.close();
-        } else if (event.type === "error") {
-          setBuildingPhase(false);
-          setRunning(false);
-          es.close();
         }
-      } catch { /* ignore */ }
-    };
-    es.onerror = () => { setBuildingPhase(false); setRunning(false); es.close(); };
+      }, 600);
+
+      pollRef.current = timer;
+    }).catch(() => {
+      setBuildingPhase(false);
+      setRunning(false);
+    });
   };
 
   const pct         = progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
