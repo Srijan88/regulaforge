@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background-color: #060e20;
+    color: #e2e2e6;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0b1326;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #31394d;
+    border-radius: 3px;
+  }
+}

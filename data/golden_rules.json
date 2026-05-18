@@ -1,0 +1,980 @@
+{
+  "pci_dss": {
+    "policy_id": "pci-dss-quick-reference-pdf",
+    "source_document": "pci_dss_quick_reference.pdf.pdf",
+    "rules": [
+      {
+        "id": "pci_-deny_untrusted_network_traffic_config-1e4ba1",
+        "name": "deny_untrusted_network_traffic_config",
+        "description": "Prohibits configuring network access to allow traffic from untrusted networks or hosts, enforcing a deny-by-default security posture for the cardholder data environment.",
+        "action": "deny",
+        "pattern": "(?i)(open|allow|permit|create|add|configure).*(port|firewall|rule|traffic|connection).*(from|to).*(any|all|untrusted|public|internet)",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "1.2",
+            "page": 12,
+            "text": "Build firewall and router configurations that restrict all traffic, inbound and outbound, from \u201cuntrusted\u201d networks..."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 1",
+          "source_pages": [
+            12
+          ]
+        }
+      },
+      {
+        "id": "pci_-prohibit_direct_public_access_to_cde-4a3bb2",
+        "name": "prohibit_direct_public_access_to_cde",
+        "description": "Prohibits creating direct public access from the Internet to any system component in the cardholder data environment (CDE).",
+        "action": "deny",
+        "pattern": "(?i)(expose|publish|connect|make\\s+public|grant\\s+access).*(to|from)\\s+(the\\s+)?(internet|public|web)",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "1.3",
+            "page": 12,
+            "text": "Prohibit direct public access between the Internet and any system component in the cardholder data environment."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 1",
+          "source_pages": [
+            12
+          ]
+        }
+      },
+      {
+        "id": "pci_-prevent_disabling_personal_firewalls-71c2f8",
+        "name": "prevent_disabling_personal_firewalls",
+        "description": "Prevents disabling personal firewall software on endpoint devices that are used to access the cardholder data environment from outside the corporate network.",
+        "action": "deny",
+        "pattern": "(?i)(disable|turn\\s+off|remove|uninstall|stop).*(personal\\s+)?firewall",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "1.4",
+            "page": 12,
+            "text": "Install personal firewall software or equivalent functionality on any devices...that connect to the Internet when outside the network"
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 1",
+          "source_pages": [
+            12
+          ]
+        }
+      },
+      {
+        "id": "pci_-block_default_credential_usage-699a5f",
+        "name": "block_default_credential_usage",
+        "description": "Prohibits the use of common vendor-supplied default passwords for authentication or system access requests.",
+        "action": "deny",
+        "pattern": "(?i)(login|password|authenticate|credential|access|user(?:name)?)\\s*(is|:|as|=)?\\s*['\"]?(1234|4321|access|admin|anonymous|database|guest|manager|pass|password|root|sa|secret|sysadmin|user)['\"]?\\b",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "2.1",
+            "page": 13,
+            "text": "Always change ALL vendor-supplied defaults and remove or disable unnecessary default accounts before installing a system..."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 2",
+          "source_pages": [
+            13
+          ]
+        }
+      },
+      {
+        "id": "pci_-prohibit_enabling_default_accounts-13f6aa",
+        "name": "prohibit_enabling_default_accounts",
+        "description": "Prevents enabling or using unnecessary default accounts like 'guest' or 'anonymous' which should be disabled as per security best practices.",
+        "action": "deny",
+        "pattern": "(?i)\\b(enable|activate|create|use|login as)\\s+(the\\s+)?(default|guest|anonymous|test|demo)\\s+(user|account)\\b",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "2.1",
+            "page": 13,
+            "text": "...remove or disable unnecessary default accounts before installing a system on the network."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 2",
+          "source_pages": [
+            13
+          ]
+        }
+      },
+      {
+        "id": "pci_-deny_unencrypted_admin_access-e92b14",
+        "name": "deny_unencrypted_admin_access",
+        "description": "Denies requests for non-console administrative access using unencrypted protocols like telnet or http, which are vulnerable to eavesdropping.",
+        "action": "deny",
+        "pattern": "(?i)\\b(telnet|ftp|http)://\\S*.*\\b(admin|manage|config|root|console|sysadmin)\\b|\\b(admin|manage|config|root|console|sysadmin).*\\b(telnet|ftp|http)\\b",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "2.3",
+            "page": 13,
+            "text": "Using strong cryptography, encrypt all non-console administrative access."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 2",
+          "source_pages": [
+            13
+          ]
+        }
+      },
+      {
+        "id": "pci_-prohibit_storage_of_cvv-4c4d55",
+        "name": "prohibit_storage_of_cvv",
+        "description": "Prohibits storing sensitive authentication data such as CVV2, CVC2, or CID after a transaction has been authorized.",
+        "action": "deny",
+        "pattern": "(?i)\\b(store|save|keep|remember|log)\\b.{1,50}\\b(cvv|cvc|cid|cvv2|cvc2|security\\s?code|card verification code|verification number)\\b",
+        "severity": "critical",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "3.2",
+            "page": 14,
+            "text": "Do not store sensitive authentication data after authorization (even if it is encrypted)."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 3",
+          "source_pages": [
+            14,
+            15
+          ]
+        }
+      },
+      {
+        "id": "pci_-prevent_full_pan_display-dc1598",
+        "name": "prevent_full_pan_display",
+        "description": "Prevents the display of a full Primary Account Number (PAN). PAN must be masked to show no more than the first six and last four digits.",
+        "action": "deny",
+        "pattern": "(?i)\\b(show|display|reveal|print|tell me|what is|get|view)\\b.{1,50}\\b(full|complete|entire|unmasked|all digits of the)\\b.{1,50}\\b(pan|card number|account number|primary account number)\\b",
+        "severity": "critical",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "3.3",
+            "page": 14,
+            "text": "Mask PAN when displayed (the first six and last four digits are the maximum number of digits you may display)..."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 3",
+          "source_pages": [
+            14,
+            15
+          ]
+        }
+      },
+      {
+        "id": "pci_-prevent_unencrypted_pan_logging-b1cc2d",
+        "name": "prevent_unencrypted_pan_logging",
+        "description": "Prohibits storing or logging a full Primary Account Number (PAN) in a readable format. PAN must be rendered unreadable via hashing, truncation, or strong cryptography.",
+        "action": "deny",
+        "pattern": "(?i)\\b(log|record|note|save|document|store)\\b.{1,50}\\b(\\d{4}[\\s-]?){3}\\d{1,7}\\b",
+        "severity": "critical",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "3.4",
+            "page": 14,
+            "text": "Render PAN unreadable anywhere it is stored \u2013 including on portable digital media, backup media, in logs..."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 3",
+          "source_pages": [
+            14,
+            15
+          ]
+        }
+      },
+      {
+        "id": "pci_-prohibit_storage_of_pin-0fff34",
+        "name": "prohibit_storage_of_pin",
+        "description": "Prohibits storing the cardholder's Personal Identification Number (PIN) or encrypted PIN block after transaction authorization.",
+        "action": "deny",
+        "pattern": "(?i)\\b(store|save|keep|remember|log)\\b.{1,50}\\b(pin|personal identification number|pin block)\\b",
+        "severity": "critical",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "Table on Page 15",
+            "page": 15,
+            "text": "PIN/PIN Block | No | Cannot store per Requirement 3.2"
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 3",
+          "source_pages": [
+            14,
+            15
+          ]
+        }
+      },
+      {
+        "id": "pci_-prohibit_storage_of_track_data-831f3d",
+        "name": "prohibit_storage_of_track_data",
+        "description": "Prohibits storing full magnetic stripe track data (or equivalent on-chip data) after transaction authorization.",
+        "action": "deny",
+        "pattern": "(?i)\\b(store|save|keep|process|log)\\b.*(%[A-Z0-9^$./\\s]{1,75}\\?|;[0-9=]{1,36}\\?)",
+        "severity": "critical",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "Table on Page 15",
+            "page": 15,
+            "text": "Full Track Data | No | Cannot store per Requirement 3.2"
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 3",
+          "source_pages": [
+            14,
+            15
+          ]
+        }
+      },
+      {
+        "id": "pci_-block_unprotected_pan_transmission-1255ff",
+        "name": "block_unprotected_pan_transmission",
+        "description": "Prohibits sending unprotected Primary Account Numbers (PANs) via end-user messaging technologies like chat, as required by PCI DSS.",
+        "action": "deny",
+        "pattern": "\\b(?:\\d[ -]*?){13,19}\\b",
+        "severity": "critical",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "4.2",
+            "page": 16,
+            "text": "Never send unprotected PANs by end user messaging technologies (for example, e-mail, instant messaging, SMS, chat, etc.)."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 4",
+          "source_pages": [
+            16
+          ]
+        }
+      },
+      {
+        "id": "pci_-enforce_default_deny_for_broad_data_access-0f425d",
+        "name": "enforce_default_deny_for_broad_data_access",
+        "description": "Access to cardholder data is denied by default. This rule blocks overly broad or unjustified queries for cardholder data, enforcing the principle of default deny.",
+        "action": "deny",
+        "pattern": "(?i)(show|give|get|list|tell me|find|export)\\s+(all|every|any|the entire list of)\\s+(cardholder|customer|account|card)s?\\s?(data|records|information)?",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "Requirement 7",
+            "page": 18,
+            "text": "Deny all access to anyone who is not specifically allowed to access cardholder data and systems"
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 7",
+          "source_pages": [
+            18
+          ]
+        }
+      },
+      {
+        "id": "pci_-block_bulk_pan_retrieval-8f908e",
+        "name": "block_bulk_pan_retrieval",
+        "description": "To enforce the 'need-to-know' principle, bulk retrieval or listing of all Primary Account Numbers (PANs) is strictly prohibited. Access must be limited to specific accounts required for a job function.",
+        "action": "deny",
+        "pattern": "(?i)(get|list|show|export|dump|reveal)\\s+(all|every)\\s+(pan|pans|primary account numbers?|card numbers?)",
+        "severity": "critical",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "7.1",
+            "page": 18,
+            "text": "Limit access to system components and cardholder data to only those individuals whose job requires such access."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 7",
+          "source_pages": [
+            18
+          ]
+        }
+      },
+      {
+        "id": "pci_-restrict_unauthorized_system_component_access-927f5b",
+        "name": "restrict_unauthorized_system_component_access",
+        "description": "Access to system components and configurations in the Cardholder Data Environment is restricted. This rule blocks attempts to query or modify system settings, logs, or security configurations.",
+        "action": "deny",
+        "pattern": "(?i)(show|get|list|modify|change|alter|view)\\s+(the\\s+)?(config|configuration|settings|access logs?|system logs?|firewall rules?|security policy)",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "Requirement 7",
+            "page": 18,
+            "text": "Deny all access to anyone who is not specifically allowed to access cardholder data and systems"
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 7",
+          "source_pages": [
+            18
+          ]
+        }
+      },
+      {
+        "id": "pci_-prohibit_shared_user_accounts-909652",
+        "name": "prohibit_shared_user_accounts",
+        "description": "Disallows requests to create or use shared, generic, or non-unique user accounts for accessing cardholder data, as each user must have a unique ID.",
+        "action": "deny",
+        "pattern": "(?i)\\b(shared|generic|group|team)\\s+(account|user|login|id|username)\\b",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "8.1",
+            "page": 19,
+            "text": "Assign all users a unique user name before allowing them to access system components or cardholder data."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 8",
+          "source_pages": [
+            19
+          ]
+        }
+      },
+      {
+        "id": "pci_-block_cleartext_password_transmission-aeb6be",
+        "name": "block_cleartext_password_transmission",
+        "description": "Prevents users from sending cleartext passwords or passphrases to the AI agent, which violates the requirement to keep them unreadable during transmission.",
+        "action": "deny",
+        "pattern": "(?i)\\b(password|passphrase|pwd|credential) is\\s*['\"]?[\\w\\d!@#$%^&*()_+-=]{4,}",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "8.2",
+            "page": 19,
+            "text": "render all passwords/passphrases unreadable during transmission and storage using strong cryptography."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 8",
+          "source_pages": [
+            19
+          ]
+        }
+      },
+      {
+        "id": "pci_-prevent_mfa_disablement-ceea70",
+        "name": "prevent_mfa_disablement",
+        "description": "Blocks any attempts to disable, turn off, or bypass multi-factor authentication (MFA) for any user, especially for remote or administrative access.",
+        "action": "deny",
+        "pattern": "(?i)\\b(disable|turn off|remove|bypass)\\s+(mfa|2fa|multi-factor|two-factor)\\b",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "8.3",
+            "page": 19,
+            "text": "Secure all individual non-console administrative access and all remote access to the cardholder data environment using multi-factor authentication."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 8",
+          "source_pages": [
+            19
+          ]
+        }
+      },
+      {
+        "id": "pci_-block_weak_password_setting-6d0ab9",
+        "name": "block_weak_password_setting",
+        "description": "Prevents users from setting weak, common, or easily guessable passwords, in line with strong authentication principles.",
+        "action": "deny",
+        "pattern": "(?i)\\b(set|change)\\s+(my\\s+)?password\\s+to\\s+['\"]?(password|123456|qwerty|admin|12345678)['\"]?\\b",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "IDENTIFY AND AUTHENTICATE ALL USERS",
+            "page": 19,
+            "text": "Every user should have a strong password for authentication."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 8",
+          "source_pages": [
+            19
+          ]
+        }
+      },
+      {
+        "id": "pci_-deny_shared_credential_use-5dba12",
+        "name": "deny_shared_credential_use",
+        "description": "Prohibits attempts to authenticate or perform actions using shared, group, or generic user identifiers, as these are explicitly forbidden.",
+        "action": "deny",
+        "pattern": "(?i)\\b(login|log in|authenticate|access|using|as)\\b.*\\b(shared|group|generic|team)\\s+(id|account|user|credential|login)",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "8.5",
+            "page": 20,
+            "text": "Do not use group, shared, or generic IDs, or other authentication methods."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 9",
+          "source_pages": [
+            20
+          ]
+        }
+      },
+      {
+        "id": "pci_-block_direct_database_queries-fbea39",
+        "name": "block_direct_database_queries",
+        "description": "Blocks attempts by users to perform direct or raw SQL-like queries against databases containing cardholder data, bypassing programmatic access controls.",
+        "action": "deny",
+        "pattern": "(?i)\\b(select\\s+.*\\s+from|update\\s+.*\\s+set|delete\\s+from|direct query|raw query)\\b",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "8.7",
+            "page": 20,
+            "text": "all user access must be through programmatic methods; only database administrators can have direct or query access"
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 9",
+          "source_pages": [
+            20
+          ]
+        }
+      },
+      {
+        "id": "pci_-prohibit_unsecured_media_creation-081002",
+        "name": "prohibit_unsecured_media_creation",
+        "description": "Prohibits requests that would create insecure physical or digital media containing cardholder data, such as printing, exporting, or downloading raw card data.",
+        "action": "deny",
+        "pattern": "(?i)\\b(print|export|save|download|email|copy to|write to file)\\b.*\\b(card numbers?|pans?|cvv|track data|full card details?|credit cards?)\\b",
+        "severity": "critical",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "Requirement 9",
+            "page": 20,
+            "text": "Businesses must physically secure or restrict access to printouts of cardholder data, to media where it is stored..."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 9",
+          "source_pages": [
+            20
+          ]
+        }
+      },
+      {
+        "id": "pci_-audit_cardholder_data_access-55e9be",
+        "name": "audit_cardholder_data_access",
+        "description": "Ensures all access to cardholder data is logged for audit purposes, as required by PCI DSS.",
+        "action": "audit",
+        "pattern": "(?i)\\b(get|show|view|find|retrieve|display|look up|access|query)\\b.*(cardholder|card number|pan|account data|payment card)",
+        "severity": "medium",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "10.2",
+            "page": 22,
+            "text": "Implement automated audit trails for all system components for reconstructing these events: all individual user accesses to cardholder data"
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 10",
+          "source_pages": [
+            21,
+            22
+          ]
+        }
+      },
+      {
+        "id": "pci_-audit_administrative_actions-d65039",
+        "name": "audit_administrative_actions",
+        "description": "Ensures all administrative actions, such as account creation or privilege changes, are logged for audit.",
+        "action": "audit",
+        "pattern": "(?i)\\b(create|delete|modify|grant|revoke|change|add|remove|update|set)\\b.*(user|account|privilege|permission|role|access right)",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "10.2",
+            "page": 22,
+            "text": "all actions taken by any individual with root or administrative privileges"
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 10",
+          "source_pages": [
+            21,
+            22
+          ]
+        }
+      },
+      {
+        "id": "pci_-deny_audit_log_tampering-d76994",
+        "name": "deny_audit_log_tampering",
+        "description": "Prohibits any attempt to stop, pause, or disable audit logging mechanisms.",
+        "action": "deny",
+        "pattern": "(?i)\\b(stop|pause|disable|turn off|halt|suspend)\\b.*(log|logging|audit|auditing|trail)",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "10.2",
+            "page": 22,
+            "text": "initialization, stopping or pausing of the audit logs"
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 10",
+          "source_pages": [
+            21,
+            22
+          ]
+        }
+      },
+      {
+        "id": "pci_-deny_audit_trail_alteration-1ccd28",
+        "name": "deny_audit_trail_alteration",
+        "description": "Prohibits any attempt to alter, modify, or delete secured audit trails.",
+        "action": "deny",
+        "pattern": "(?i)\\b(alter|modify|delete|clear|edit|change|remove|tamper with)\\b.*(log|audit|trail)",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "10.5",
+            "page": 22,
+            "text": "Secure audit trails so they cannot be altered."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 10",
+          "source_pages": [
+            21,
+            22
+          ]
+        }
+      },
+      {
+        "id": "pci_-prohibit_ignoring_vulnerability_scan_failures-0da751",
+        "name": "prohibit_ignoring_vulnerability_scan_failures",
+        "description": "Prohibits instructing the agent to ignore, suppress, or accept failing vulnerability scan results, particularly those rated high-risk or with a CVSS score of 4.0 or higher.",
+        "action": "deny",
+        "pattern": "(?i)(ignore|disregard|accept|suppress).*(vulnerability|scan result|cvss.*(4\\.0|high|fail))",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "11.2",
+            "page": 23,
+            "text": "Address vulnerabilities and perform rescans as needed, until passing scans are achieved."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 11",
+          "source_pages": [
+            23
+          ]
+        }
+      },
+      {
+        "id": "pci_-prohibit_disabling_intrusion_detection_systems-5ab6da",
+        "name": "prohibit_disabling_intrusion_detection_systems",
+        "description": "Prevents any attempt to instruct the agent to disable, bypass, or silence alerts from network intrusion detection or prevention systems (IDS/IPS).",
+        "action": "deny",
+        "pattern": "(?i)(disable|turn off|silence|stop|ignore).*(ids|ips|intrusion\\s+(detection|prevention)|network monitoring|compromise alert)",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "11.4",
+            "page": 23,
+            "text": "Use network intrusion detection and/or intrusion prevention techniques to detect and/or prevent intrusions into the network."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 11",
+          "source_pages": [
+            23
+          ]
+        }
+      },
+      {
+        "id": "pci_-audit_discussions_of_security_testing-5e70ed",
+        "name": "audit_discussions_of_security_testing",
+        "description": "Audits all conversations related to the planning, execution, or results of security tests, including penetration tests and vulnerability scans, for oversight.",
+        "action": "audit",
+        "pattern": "(?i)(penetration test|pen\\s*test|vulnerability scan|security audit|wireless scan|802\\.11)",
+        "severity": "low",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "Requirement 11",
+            "page": 23,
+            "text": "System components, processes, and custom software should be tested frequently to ensure security is maintained over time."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 11",
+          "source_pages": [
+            23
+          ]
+        }
+      },
+      {
+        "id": "pci_-prohibit_bypassing_network_segmentation_for_testing-06c5ad",
+        "name": "prohibit_bypassing_network_segmentation_for_testing",
+        "description": "Denies requests to alter or disable network segmentation controls that isolate the cardholder data environment, even when requested for testing purposes.",
+        "action": "deny",
+        "pattern": "(?i)(disable|open|bypass|remove).*(segmentation|firewall rule|acl).*(cde|cardholder|test|scan)",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "11.3",
+            "page": 23,
+            "text": "...perform penetration tests at least annually to verify the segmentation methods are operational and effective."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 11",
+          "source_pages": [
+            23
+          ]
+        }
+      },
+      {
+        "id": "pci_-deny_card_data_via_insecure_channels-ec72a2",
+        "name": "deny_card_data_via_insecure_channels",
+        "description": "Prohibit the transmission of cardholder data over insecure channels like email, as required by usage policies for critical technologies.",
+        "action": "deny",
+        "pattern": "(?i)(email|send via email|text me).*(card|pan|account number|cvv|cvc|payment details)",
+        "severity": "critical",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "12.3",
+            "page": 24,
+            "text": "Develop usage policies for critical technologies to define their proper use by all personnel. These include... email and Internet."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 12",
+          "source_pages": [
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39
+          ]
+        }
+      },
+      {
+        "id": "pci_-audit_unapproved_third_party_integration-b8c767",
+        "name": "audit_unapproved_third_party_integration",
+        "description": "Attempts to share cardholder data with or configure integrations to external service providers must be audited to ensure they comply with vendor management policies.",
+        "action": "audit",
+        "pattern": "(?i)(send|share|transmit|forward|pipe).*(cardholder|payment|transaction) data to.*(http|api|ftp|sftp|webhook)",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "12.8",
+            "page": 25,
+            "text": "Maintain and implement policies and procedures to manage service providers with which cardholder data is shared..."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 12",
+          "source_pages": [
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39
+          ]
+        }
+      },
+      {
+        "id": "pci_-audit_potential_security_incident-734f76",
+        "name": "audit_potential_security_incident",
+        "description": "Messages indicating a potential security breach or incident must be logged and escalated to the incident response team for immediate review.",
+        "action": "audit",
+        "pattern": "(?i)\\b(breach|hack|compromise|unauthorized access|data leak|security incident|system compromised)\\b",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "pci_dss_quick_reference.pdf.pdf",
+            "section": "12.10",
+            "page": 25,
+            "text": "Implement an incident response plan. Be prepared to respond immediately to a system breach."
+          }
+        ],
+        "metadata": {
+          "doc_type": "pci_dss",
+          "chunk_label": "Requirement 12",
+          "source_pages": [
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39
+          ]
+        }
+      }
+    ],
+    "extracted_at": "2026-05-14T13:08:40.030249+00:00"
+  },
+  "ffiec": {
+    "policy_id": "ffiec-wire-transfer",
+    "source_document": "ffiec_wire_transfer.pdf",
+    "rules": [
+      {
+        "id": "ffie-audit_funds_transfers_for_aml_risk-c1d957",
+        "name": "audit_funds_transfers_for_aml_risk",
+        "description": "All funds transfers must be subject to monitoring and reporting systems to manage AML risks, as per the FFIEC objective.",
+        "action": "audit",
+        "pattern": "(?i)\\b(wire|transfer|send|remit|payment)\\b.*\\$\\s*[0-9,.]+",
+        "severity": "medium",
+        "source_clauses": [
+          {
+            "source_doc": "ffiec_wire_transfer.pdf",
+            "section": "Funds Transfers \u2014 Overview",
+            "page": 207,
+            "text": "Objective. Assess the adequacy of the bank\u2019s systems to manage the risks associated with funds transfers...to implement effective monitoring..."
+          }
+        ],
+        "metadata": {
+          "doc_type": "ffiec",
+          "chunk_label": "Funds Transfers \u2014 Overview",
+          "source_pages": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      },
+      {
+        "id": "ffie-block_payment_info_stripping-2f54c7",
+        "name": "block_payment_info_stripping",
+        "description": "Prohibits requests to omit, delete, or alter information in payment messages for the purpose of avoiding detection by other institutions in the payment chain.",
+        "action": "deny",
+        "pattern": "(?i)\\b(omit|delete|alter|strip|remove|hide|obscure)\\s+(the\\s+)?(originator|beneficiary|sender|recipient|customer|source|purpose)\\s+(info|details|name|data)",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "ffiec_wire_transfer.pdf",
+            "section": "Risk Mitigation",
+            "page": 212,
+            "text": "Financial institutions should not omit, delete, or alter information in payment messages or orders for the purpose of avoiding detection..."
+          }
+        ],
+        "metadata": {
+          "doc_type": "ffiec",
+          "chunk_label": "Risk Factors",
+          "source_pages": [
+            5,
+            6,
+            7
+          ]
+        }
+      },
+      {
+        "id": "ffie-deny_anonymous_non_customer_wires-20a9e3",
+        "name": "deny_anonymous_non_customer_wires",
+        "description": "Denies wire transfer services to non-customers providing minimal or no identifying information, which poses a significant risk.",
+        "action": "deny",
+        "pattern": "(?i)\\b(wire|transfer|send money)\\b.*\\b(non-?customer|walk-?in|anonymous|no id|without identification)\\b",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "ffiec_wire_transfer.pdf",
+            "section": "Risk Factors",
+            "page": 211,
+            "text": "...risks are heightened in PUPID transactions if the bank allows a noncustomer to access the funds transfer system..."
+          }
+        ],
+        "metadata": {
+          "doc_type": "ffiec",
+          "chunk_label": "Risk Factors",
+          "source_pages": [
+            5,
+            6,
+            7
+          ]
+        }
+      },
+      {
+        "id": "ffie-deny_informal_value_transfer_systems-31278d",
+        "name": "deny_informal_value_transfer_systems",
+        "description": "Prohibits transactions related to Informal Value Transfer Systems (IVTS) such as Hawala, which are used to circumvent formal banking systems and AML controls.",
+        "action": "deny",
+        "pattern": "(?i)\\b(hawala|hundi|fei\\s*ch'ien|informal value transfer|ivts)\\b",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "ffiec_wire_transfer.pdf",
+            "section": "Risk Factors",
+            "page": 211,
+            "text": "IVTS pose a heightened concern because they are able to circumvent the formal system."
+          }
+        ],
+        "metadata": {
+          "doc_type": "ffiec",
+          "chunk_label": "Risk Factors",
+          "source_pages": [
+            5,
+            6,
+            7
+          ]
+        }
+      },
+      {
+        "id": "ffie-require_complete_wire_transfer_info-d52208",
+        "name": "require_complete_wire_transfer_info",
+        "description": "Denies wire transfers, especially cover payments, that lack complete originator and beneficiary information, as this prevents monitoring and OFAC screening.",
+        "action": "deny",
+        "pattern": "(?i)\\b(wire|transfer)\\b.*\\b(without|no|missing)\\s+(originator|beneficiary|sender|recipient)\\s+(info|details|name)",
+        "severity": "high",
+        "source_clauses": [
+          {
+            "source_doc": "ffiec_wire_transfer.pdf",
+            "section": "Risk Factors",
+            "page": 211,
+            "text": "...intermediary bank that does not receive...an adequately completed MT 202 COV that identifies the originator and beneficiary..."
+          }
+        ],
+        "metadata": {
+          "doc_type": "ffiec",
+          "chunk_label": "Risk Factors",
+          "source_pages": [
+            5,
+            6,
+            7
+          ]
+        }
+      },
+      {
+        "id": "ffie-audit_cover_payment_messages-5a4d51",
+        "name": "audit_cover_payment_messages",
+        "description": "Ensures that all cover payment messages are logged and monitored for suspicious activity as part of an effective risk mitigation process.",
+        "action": "audit",
+        "pattern": "(?i)\\b(process|initiate|send|complete)\\s+(a\\s+)?(cover payment|mt\\s*202\\s*cov)\\b",
+        "severity": "medium",
+        "source_clauses": [
+          {
+            "source_doc": "ffiec_wire_transfer.pdf",
+            "section": "Risk Mitigation",
+            "page": 212,
+            "text": "effective monitoring processes for cover payments include: Monitoring funds transfers processed through automated systems..."
+          }
+        ],
+        "metadata": {
+          "doc_type": "ffiec",
+          "chunk_label": "Risk Factors",
+          "source_pages": [
+            5,
+            6,
+            7
+          ]
+        }
+      }
+    ],
+    "extracted_at": "2026-05-14T13:09:46.533166+00:00"
+  }
+}

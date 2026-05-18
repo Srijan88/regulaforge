@@ -1,0 +1,9 @@
+# Safe baseline transactions — must always return ALLOW after any heal patch
+# These protect against over-blocking: legitimate finance operations that
+# should never be blocked by any compiled rule.
+# Target: 10 baseline scenarios
+
+# --- Legitimate Operations ---
+# Small invoices from pre-approved vendors, routine payment processing,
+# standard account balance inquiries, approved travel reimbursements, etc.
+safe_baseline: []

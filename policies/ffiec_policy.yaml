@@ -1,0 +1,83 @@
+version: '1.0'
+policy_name: ffiec-wire-transfer
+default_action: ALLOW
+ingress_rules:
+- name: block_payment_info_stripping
+  description: Prohibits requests to omit, delete, or alter information in payment messages for the purpose
+    of avoiding detection by other institutions in the payment chain.
+  priority: 72
+  action: DENY
+  conditions:
+  - field: contains_credentials
+    match_type: boolean
+    value: true
+  deny_message: '[REGULAFORGE] BLOCKED: Prohibits requests to omit, delete, or alter information in payment
+    messages for the purpose of avoiding detection by other institutions in the payment chain.. [ffiec_wire_transfer.pdf
+    §Risk Mitigation]'
+- name: deny_anonymous_non_customer_wires
+  description: Denies wire transfer services to non-customers providing minimal or no identifying information,
+    which poses a significant risk.
+  priority: 71
+  action: DENY
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+  deny_message: '[REGULAFORGE] BLOCKED: Denies wire transfer services to non-customers providing minimal
+    or no identifying information, which poses a significant risk.. [ffiec_wire_transfer.pdf §Risk Factors]'
+- name: deny_informal_value_transfer_systems
+  description: Prohibits transactions related to Informal Value Transfer Systems (IVTS) such as Hawala,
+    which are used to circumvent formal banking systems and AML controls.
+  priority: 70
+  action: DENY
+  conditions:
+  - field: contains_phishing_patterns
+    match_type: boolean
+    value: true
+  deny_message: '[REGULAFORGE] BLOCKED: Prohibits transactions related to Informal Value Transfer Systems
+    (IVTS) such as Hawala, which are used to circumvent formal banking systems and AML controls.. [ffiec_wire_transfer.pdf
+    §Risk Factors]'
+- name: require_complete_wire_transfer_info
+  description: Denies wire transfers, especially cover payments, that lack complete originator and beneficiary
+    information, as this prevents monitoring and OFAC screening.
+  priority: 69
+  action: DENY
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+  deny_message: '[REGULAFORGE] BLOCKED: Denies wire transfers, especially cover payments, that lack complete
+    originator and beneficiary information, as this prevents monitoring and OFAC screening.. [ffiec_wire_transfer.pdf
+    §Risk Factors]'
+- name: audit_funds_transfers_for_aml_risk
+  description: All funds transfers must be subject to monitoring and reporting systems to manage AML risks,
+    as per the FFIEC objective.
+  priority: 40
+  action: LOG
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+- name: audit_cover_payment_messages
+  description: Ensures that all cover payment messages are logged and monitored for suspicious activity
+    as part of an effective risk mitigation process.
+  priority: 35
+  action: LOG
+  conditions:
+  - field: contains_pii_request
+    match_type: boolean
+    value: true
+egress_rules: []
+rate_limits:
+  requests_per_minute: 60
+  requests_per_hour: 500
+  burst_threshold: 10
+filesystem:
+  denied_paths:
+  - /etc/**
+  - /root/**
+  - '**/.ssh/**'
+  - '**/.env'
+  - '**/*secret*'
+  - '**/*password*'
+  - '**/*credential*'

@@ -1,0 +1,10 @@
+# Healing prompt — fill before healer.py implementation
+# This prompt is sent to Gemini 2.5 Pro with response_schema=HealPatch
+# to patch a PolicyRule that failed red-team attacks.
+#
+# Key requirements:
+# - Patch must tighten the rule to catch the failing attacks
+# - Must NOT break any safe baseline transactions (regression check enforced in code)
+# - Patched YAML must be valid Lobster Trap rule syntax
+# - Gemini reasoning must explain WHY the original pattern was insufficient
+# - Reference specific regulatory clauses that justify the tightened pattern
