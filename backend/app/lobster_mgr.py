@@ -114,6 +114,9 @@ class LobsterTrapManager:
         # Ensure audit log directory exists
         self._audit_log_path.parent.mkdir(parents=True, exist_ok=True)
 
+        # Ensure binary is executable
+        binary.chmod(binary.stat().st_mode | 0o111)
+
         backend_url = os.getenv("LOBSTER_TRAP_BACKEND", "http://localhost:8000")
         cmd = [
             str(binary), "serve",
