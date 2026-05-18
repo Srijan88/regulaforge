@@ -116,7 +116,7 @@ async def upload_policy(file: UploadFile = File(...)):
                     compiled_yaml = compile_to_lobster_trap(extraction, policy_name="finance-combined")
 
                     # Save to the default policy file
-                    policy_save_path = Path(__file__).parents[2] / "policies" / "finance_combined_policy.yaml"
+                    policy_save_path = Path(__file__).parents[1] / "policies" / "finance_combined_policy.yaml"
                     policy_save_path.write_text(compiled_yaml, encoding="utf-8")
                     print(f"[compile] Saved {len(rules)} rules to {policy_save_path}")
 
