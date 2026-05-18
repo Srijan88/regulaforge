@@ -544,15 +544,6 @@ Drop any Lobster Trap–compatible YAML policy into `backend/policies/`. The act
 
 ---
 
-## Live Demo
-
-| Service | URL |
-|---|---|
-| Frontend | https://regulaforge-app.vercel.app |
-| Backend API | https://regulaforge-production.up.railway.app |
-
----
-
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
