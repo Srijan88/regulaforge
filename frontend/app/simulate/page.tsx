@@ -126,25 +126,10 @@ export default function SimulatePage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const { mode, selectedPolicy } = useMode();
 
-  // Restore history from localStorage on mount
+  // Clear any stale history on mount — chat starts fresh each session
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(HISTORY_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved) as ChatEntry[];
-        // Drop any entries that were mid-flight (loading/explaining flags)
-        setHistory(parsed.filter(e => !e.loading && !e.explaining));
-      }
-    } catch { /* ignore corrupt data */ }
+    localStorage.removeItem(HISTORY_KEY);
   }, []);
-
-  // Persist history whenever it changes (skip transient loading states)
-  useEffect(() => {
-    if (history.some(e => e.loading || e.explaining)) return;
-    try {
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-    } catch { /* ignore quota errors */ }
-  }, [history]);
 
   const clearHistory = () => {
     setHistory([]);
