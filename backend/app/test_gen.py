@@ -348,19 +348,17 @@ async def build_custom_suite(
 
     num_cats     = len(valid_cats)
     per_cat      = max(3, total_attacks // num_cats)
-    expert_count = max(1, per_cat // 3)
-    hf_count     = max(1, per_cat // 3)
-    gem_count    = per_cat - expert_count - hf_count
+    expert_count = max(1, per_cat // 2)
+    gem_count    = per_cat - expert_count
 
-    # Fetch HF rows and classify in parallel with Gemini setup
+    # Skip HuggingFace for custom suites — HF fetch is slow/unreliable on Railway.
+    # Use expert (hand-crafted) + Gemini (dynamic evasion-focused) only.
     gemini_client = None
     try:
         from . import get_gemini_client
         gemini_client = get_gemini_client()
     except Exception:
         pass
-
-    hf_rows_task = asyncio.create_task(_fetch_hf_rows(total=200))
 
     # Fire all Gemini calls for all categories in PARALLEL
     gemini_tasks: dict[str, asyncio.Task] = {}
@@ -371,15 +369,13 @@ async def build_custom_suite(
         ))
         gemini_tasks[cat_id] = task
 
-    # Await HF rows
-    hf_rows    = await hf_rows_task
-    hf_buckets = _classify_hf_rows(hf_rows)
+    hf_buckets: dict = {}  # not used in custom mode
 
-    # Await all Gemini results
+    # Await all Gemini results (with per-task timeout)
     gemini_results: dict[str, list[str]] = {}
     for cat_id, task in gemini_tasks.items():
         try:
-            gemini_results[cat_id] = await task
+            gemini_results[cat_id] = await asyncio.wait_for(task, timeout=30.0)
         except Exception as exc:
             logger.warning(f"Gemini task failed for {cat_id}: {exc}")
             gemini_results[cat_id] = []
@@ -392,7 +388,7 @@ async def build_custom_suite(
         short = cat["short"]
 
         cat_attacks: list[dict] = []
-        counters = {"expert": 0, "hf": 0, "gemini": 0}
+        counters = {"expert": 0, "gemini": 0}
 
         # 1. Expert attacks (hard-coded, adversarially crafted)
         expert_pool = list(_EXPERT_ATTACKS.get(cat_id, []))
@@ -401,18 +397,9 @@ async def build_custom_suite(
             cat_attacks.append(_make_attack(f"ATK-{short}-EX-{i+1:02d}", cat, text, "expert", cat_id))
             counters["expert"] += 1
 
-        # 2. HuggingFace attacks
-        hf_pool = list(hf_buckets.get(cat_id, []))
-        random.shuffle(hf_pool)
-        for i, text in enumerate(hf_pool[:hf_count]):
-            cat_attacks.append(_make_attack(f"ATK-{short}-HF-{i+1:02d}", cat, text, "huggingface", cat_id))
-            counters["hf"] += 1
-
-        # 3. Gemini-generated attacks (evasion-focused)
+        # 2. Gemini-generated attacks (evasion-focused)
         gem_pool = gemini_results.get(cat_id, [])
-        hf_deficit = max(0, hf_count - counters["hf"])
-        gem_take = gem_count + hf_deficit  # fill HF gap with Gemini
-        for i, text in enumerate(gem_pool[:gem_take]):
+        for i, text in enumerate(gem_pool[:gem_count]):
             cat_attacks.append(_make_attack(f"ATK-{short}-GEM-{i+1:02d}", cat, text, "gemini", cat_id))
             counters["gemini"] += 1
 
@@ -420,7 +407,6 @@ async def build_custom_suite(
         sources[cat_id] = {
             "label":  cat["label"],
             "expert": counters["expert"],
-            "hf":     counters["hf"],
             "gemini": counters["gemini"],
             "total":  len(cat_attacks),
         }

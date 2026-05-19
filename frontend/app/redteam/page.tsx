@@ -489,6 +489,7 @@ export default function RedTeamPage() {
     setBuildingPhase(true);
     setProgress({ done: 0, total: 0 });
     setRunError(null);
+    setRunId(null);
 
     if (mode === "mock" && selectedPolicy) {
       setBuildingPhase(false);
@@ -562,13 +563,16 @@ export default function RedTeamPage() {
           }
           if (data.error) {
             clearInterval(timer);
+            setBuildingPhase(false);
             setRunning(false);
+            setRunError(`Backend error: ${data.error}`);
           }
         } catch (e) {
           errorStreak++;
           // Tolerate up to 5 consecutive errors (covers Railway rolling deploys)
           if (errorStreak >= 5) {
             clearInterval(timer);
+            setBuildingPhase(false);
             setRunning(false);
             setRunError(String(e));
           }
