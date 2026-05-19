@@ -33,7 +33,7 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-DATA_DIR     = Path(__file__).parents[2] / "data"
+DATA_DIR     = Path(__file__).parents[1] / "data"
 ATTACKS_FILE = DATA_DIR / "curated_attacks.yaml"
 
 # ---------------------------------------------------------------------------
@@ -184,40 +184,27 @@ _EXPERT_ATTACKS: dict[str, list[str]] = {
 }
 
 # ---------------------------------------------------------------------------
-# HuggingFace REST API
+# Local prompt-injection dataset (bundled CSV — no external API needed)
 # ---------------------------------------------------------------------------
 
-_HF_URL = (
-    "https://datasets-server.huggingface.co/rows"
-    "?dataset=S-Labs%2Fprompt-injection-dataset"
-    "&config=default&split=train&offset={offset}&length={length}"
-)
+_LOCAL_CSV = DATA_DIR / "prompt_injection_dataset.csv"
 
 
 async def _fetch_hf_rows(total: int = 200) -> list[dict]:
-    """Fetch rows from S-Labs/prompt-injection-dataset via HF REST API."""
+    """Load rows from the bundled prompt_injection_dataset.csv."""
     rows: list[dict] = []
-    offset = 0
-    batch  = 100
-
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        while len(rows) < total:
-            url = _HF_URL.format(offset=offset, length=min(batch, total - len(rows)))
-            try:
-                resp = await client.get(url)
-                if resp.status_code != 200:
+    try:
+        import csv
+        with open(_LOCAL_CSV, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if len(rows) >= total:
                     break
-                data = resp.json()
-                batch_rows = data.get("rows", [])
-                if not batch_rows:
-                    break
-                rows.extend(batch_rows)
-                offset += len(batch_rows)
-                if len(batch_rows) < batch:
-                    break
-            except Exception as exc:
-                logger.warning(f"HF fetch error at offset={offset}: {exc}")
-                break
+                if row.get("label") == "1":
+                    rows.append({"row": {"text": row["text"], "label": 1}})
+    except Exception as exc:
+        logger.warning(f"Local CSV load error: {exc}")
+    return rows
 
     logger.info(f"Fetched {len(rows)} rows from S-Labs/prompt-injection-dataset")
     return rows
@@ -348,11 +335,10 @@ async def build_custom_suite(
 
     num_cats     = len(valid_cats)
     per_cat      = max(3, total_attacks // num_cats)
-    expert_count = max(1, per_cat // 2)
-    gem_count    = per_cat - expert_count
+    expert_count = max(1, per_cat // 3)
+    hf_count     = max(1, per_cat // 3)
+    gem_count    = per_cat - expert_count - hf_count
 
-    # Skip HuggingFace for custom suites — HF fetch is slow/unreliable on Railway.
-    # Use expert (hand-crafted) + Gemini (dynamic evasion-focused) only.
     gemini_client = None
     try:
         from . import get_gemini_client
@@ -360,7 +346,9 @@ async def build_custom_suite(
     except Exception:
         pass
 
-    # Fire all Gemini calls for all categories in PARALLEL
+    # Load local CSV and fire Gemini calls in parallel
+    hf_rows_task = asyncio.create_task(_fetch_hf_rows(total=300))
+
     gemini_tasks: dict[str, asyncio.Task] = {}
     for cat_id in valid_cats:
         task = asyncio.create_task(asyncio.to_thread(
@@ -369,9 +357,9 @@ async def build_custom_suite(
         ))
         gemini_tasks[cat_id] = task
 
-    hf_buckets: dict = {}  # not used in custom mode
+    hf_rows    = await hf_rows_task
+    hf_buckets = _classify_hf_rows(hf_rows)
 
-    # Await all Gemini results (with per-task timeout)
     gemini_results: dict[str, list[str]] = {}
     for cat_id, task in gemini_tasks.items():
         try:
@@ -388,18 +376,26 @@ async def build_custom_suite(
         short = cat["short"]
 
         cat_attacks: list[dict] = []
-        counters = {"expert": 0, "gemini": 0}
+        counters = {"expert": 0, "hf": 0, "gemini": 0}
 
-        # 1. Expert attacks (hard-coded, adversarially crafted)
+        # 1. Expert attacks
         expert_pool = list(_EXPERT_ATTACKS.get(cat_id, []))
         random.shuffle(expert_pool)
         for i, text in enumerate(expert_pool[:expert_count]):
             cat_attacks.append(_make_attack(f"ATK-{short}-EX-{i+1:02d}", cat, text, "expert", cat_id))
             counters["expert"] += 1
 
-        # 2. Gemini-generated attacks (evasion-focused)
+        # 2. Local dataset attacks
+        hf_pool = list(hf_buckets.get(cat_id, []))
+        random.shuffle(hf_pool)
+        for i, text in enumerate(hf_pool[:hf_count]):
+            cat_attacks.append(_make_attack(f"ATK-{short}-HF-{i+1:02d}", cat, text, "dataset", cat_id))
+            counters["hf"] += 1
+
+        # 3. Gemini-generated attacks
         gem_pool = gemini_results.get(cat_id, [])
-        for i, text in enumerate(gem_pool[:gem_count]):
+        hf_deficit = max(0, hf_count - counters["hf"])
+        for i, text in enumerate(gem_pool[:gem_count + hf_deficit]):
             cat_attacks.append(_make_attack(f"ATK-{short}-GEM-{i+1:02d}", cat, text, "gemini", cat_id))
             counters["gemini"] += 1
 
@@ -407,6 +403,7 @@ async def build_custom_suite(
         sources[cat_id] = {
             "label":  cat["label"],
             "expert": counters["expert"],
+            "hf":     counters["hf"],
             "gemini": counters["gemini"],
             "total":  len(cat_attacks),
         }
