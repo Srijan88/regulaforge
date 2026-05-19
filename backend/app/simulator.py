@@ -220,9 +220,15 @@ async def run_attack_suite(
 # Background run (polling-friendly alternative to SSE)
 # ---------------------------------------------------------------------------
 
-async def _bg_worker(run_id: str, suite: dict, policy_id: str, concurrency: int, use_gemini_guard: bool) -> None:
-    """Background task: process attack suite and write results to _bg_runs incrementally."""
+async def _bg_worker(run_id: str, suite_or_coro, policy_id: str, concurrency: int, use_gemini_guard: bool) -> None:
+    """Background task: optionally build suite first, then process attacks."""
     slot = _bg_runs[run_id]
+    try:
+        suite = await suite_or_coro if asyncio.iscoroutine(suite_or_coro) else suite_or_coro
+    except Exception as exc:
+        slot["error"] = str(exc)
+        slot["done"] = True
+        return
     all_items: list[dict] = suite["attacks"] + suite["safe"]
     slot["total"] = len(all_items)
 
@@ -262,10 +268,10 @@ async def _bg_worker(run_id: str, suite: dict, policy_id: str, concurrency: int,
     slot["done"] = True
 
 
-def start_bg_run(run_id: str, suite: dict, policy_id: str, concurrency: int, use_gemini_guard: bool) -> None:
-    """Initialise slot and schedule background worker."""
+def start_bg_run(run_id: str, suite_or_coro, policy_id: str, concurrency: int, use_gemini_guard: bool) -> None:
+    """Initialise slot and schedule background worker. suite_or_coro may be a dict or a coroutine."""
     _bg_runs[run_id] = {"verdicts": [], "total": 0, "done": False, "summary": None, "error": None}
-    asyncio.create_task(_bg_worker(run_id, suite, policy_id, concurrency, use_gemini_guard))
+    asyncio.create_task(_bg_worker(run_id, suite_or_coro, policy_id, concurrency, use_gemini_guard))
 
 
 def get_bg_progress(run_id: str, from_index: int = 0) -> dict | None:

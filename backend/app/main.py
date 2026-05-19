@@ -372,6 +372,9 @@ async def start_redteam(policy_id: str, request: Request):
     use_gemini_guard = not disable_gemini
     use_custom       = bool(categories_param or total_param)
 
+    import uuid as _uuid_mod
+    run_id = f"bg-{_uuid_mod.uuid4().hex[:8]}"
+
     if use_custom:
         from .test_gen import build_custom_suite
         selected = [c.strip() for c in categories_param.split(",") if c.strip()]
@@ -382,15 +385,14 @@ async def start_redteam(policy_id: str, request: Request):
         policy_context = ""
         if lt_manager.active_policy_path and lt_manager.active_policy_path.exists():
             policy_context = lt_manager.active_policy_path.read_text(encoding="utf-8")
-        suite = await build_custom_suite(selected, total_attacks, policy_context)
+        # Pass coroutine — background worker awaits it, endpoint returns immediately
+        suite_or_coro = build_custom_suite(selected, total_attacks, policy_context)
+        start_bg_run(run_id, suite_or_coro, policy_id, concurrency, use_gemini_guard)
+        return {"run_id": run_id, "total": 0}
     else:
         suite = get_attack_suite(use_huggingface=False)
-
-    import uuid as _uuid_mod
-    run_id = f"bg-{_uuid_mod.uuid4().hex[:8]}"
-    start_bg_run(run_id, suite, policy_id, concurrency, use_gemini_guard)
-    total = len(suite["attacks"]) + len(suite["safe"])
-    return {"run_id": run_id, "total": total}
+        start_bg_run(run_id, suite, policy_id, concurrency, use_gemini_guard)
+        return {"run_id": run_id, "total": len(suite["attacks"]) + len(suite["safe"])}
 
 
 @redteam_router.get("/progress/{run_id}")

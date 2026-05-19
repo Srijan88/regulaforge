@@ -540,10 +540,11 @@ export default function RedTeamPage() {
             error: string | null;
           }>(`/redteam/progress/${run_id}?from_index=${pollIndexRef.current}`);
 
+          if (data.total > 0) setBuildingPhase(false);
           if (data.verdicts.length > 0) {
             pollIndexRef.current += data.verdicts.length;
             setRows(prev => [...prev, ...data.verdicts]);
-            setProgress({ done: pollIndexRef.current, total: data.total || total });
+            setProgress({ done: pollIndexRef.current, total: data.total });
           }
 
           if (data.done) {
