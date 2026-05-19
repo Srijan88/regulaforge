@@ -531,6 +531,7 @@ export default function RedTeamPage() {
       setProgress({ done: 0, total });
       pollIndexRef.current = 0;
 
+      let errorStreak = 0;
       const timer = setInterval(async () => {
         try {
           const data = await apiFetch<{
@@ -541,6 +542,7 @@ export default function RedTeamPage() {
             error: string | null;
           }>(`/redteam/progress/${run_id}?from_index=${pollIndexRef.current}`);
 
+          errorStreak = 0;
           if (data.total > 0) setBuildingPhase(false);
           if (data.verdicts.length > 0) {
             pollIndexRef.current += data.verdicts.length;
@@ -563,9 +565,13 @@ export default function RedTeamPage() {
             setRunning(false);
           }
         } catch (e) {
-          clearInterval(timer);
-          setRunning(false);
-          setRunError(String(e));
+          errorStreak++;
+          // Tolerate up to 5 consecutive errors (covers Railway rolling deploys)
+          if (errorStreak >= 5) {
+            clearInterval(timer);
+            setRunning(false);
+            setRunError(String(e));
+          }
         }
       }, 600);
 
