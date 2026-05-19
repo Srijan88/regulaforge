@@ -417,6 +417,7 @@ export default function RedTeamPage() {
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [runId, setRunId]       = useState<string | null>(null);
   const [whyModal, setWhyModal] = useState<WhyModal | null>(null);
+  const [runError, setRunError] = useState<string | null>(null);
 
   // No categories selected by default — user must choose
   const [selectedCats, setSelectedCats] = useState<Set<CategoryId>>(new Set());
@@ -487,6 +488,7 @@ export default function RedTeamPage() {
     setRunning(true);
     setBuildingPhase(true);
     setProgress({ done: 0, total: 0 });
+    setRunError(null);
 
     if (mode === "mock" && selectedPolicy) {
       setBuildingPhase(false);
@@ -558,16 +560,18 @@ export default function RedTeamPage() {
             clearInterval(timer);
             setRunning(false);
           }
-        } catch {
+        } catch (e) {
           clearInterval(timer);
           setRunning(false);
+          setRunError(String(e));
         }
       }, 600);
 
       pollRef.current = timer;
-    }).catch(() => {
+    }).catch((e: unknown) => {
       setBuildingPhase(false);
       setRunning(false);
+      setRunError(e instanceof Error ? e.message : String(e));
     });
   };
 
@@ -822,6 +826,14 @@ export default function RedTeamPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* ── Error banner ── */}
+        {runError && (
+          <div className="mb-4 px-4 py-3 rounded-xl text-xs font-mono break-all"
+            style={{ background: "rgba(240,71,71,0.10)", border: "1px solid rgba(240,71,71,0.30)", color: "#f87171" }}>
+            <span className="font-bold">Error: </span>{runError}
           </div>
         )}
 
