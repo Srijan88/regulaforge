@@ -526,7 +526,8 @@ export default function RedTeamPage() {
       `/redteam/start/finance-combined?${qs}`,
       { method: "POST" },
     ).then(({ run_id, total }) => {
-      setBuildingPhase(false);
+      // Keep buildingPhase=true until background task sets total>0
+      if (total > 0) setBuildingPhase(false);
       setProgress({ done: 0, total });
       pollIndexRef.current = 0;
 
